@@ -1,0 +1,65 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.pnpm-debug.log
+# package-lock.json should be committed for reproducible builds
+yarn.lock
+.npm
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build directories
+dist/
+build/
+out/
+.next/
+.nuxt/
+
+# Vite/React specific
+.vite/
+coverage/
+
+# Log files
+logs/
+*.log
+
+# IDE/Editor specific
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+.history/
+
+# Python specific
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.egg-info/
+.installed.cfg
+
+# Testing
+.coverage
+htmlcov/
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+Thumbs.db
+
+# Cache
+.cache/ 
