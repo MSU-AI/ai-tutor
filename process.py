@@ -21,15 +21,28 @@ def process_transcript(transcript):
 
 def extract_topics(segments):
     """
-    Uses OpenAI API to extract key topics from each transcript segment.
+    Uses OpenAI API to extract key topics from the transcript in batches.
     """
-    for segment in segments:
-        prompt = f"Extract the key topics from the following lecture text: \"{segment['text']}\""
+    if not segments:
+        return []
+
+    texts = [segment['text'] for segment in segments]
+    prompt = "Extract key topics from the following lecture texts:\n\n" + "\n".join(texts)
+    
+    try:
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}]
         )
-        segment["topics"] = response["choices"][0]["message"]["content"].strip()
+        extracted_topics = response["choices"][0]["message"]["content"].strip().split("\n")
+        
+        for segment, topic in zip(segments, extracted_topics):
+            segment["topics"] = topic
+    except Exception as e:
+        print(f"Error fetching topics: {e}")
+        for segment in segments:
+            segment["topics"] = "Unknown"
+    
     return segments
 
 def build_topic_index(segments):
@@ -49,7 +62,7 @@ def find_topic_timestamp(user_query, topic_index):
     """
     query_lower = user_query.lower()
     for topic in topic_index:
-        if query_lower in topic:  # Simple keyword match
+        if query_lower in topic:
             return topic_index[topic]
     return "Topic not found."
 
