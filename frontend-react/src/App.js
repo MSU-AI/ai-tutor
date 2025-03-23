@@ -50,7 +50,7 @@ function App() {
   }, [documents]);
 
   const connectWebSocket = () => {
-    ws.current = new WebSocket(`ws://${window.location.hostname}:8000/ws/chat`);
+    ws.current = new WebSocket(`wss://${window.location.hostname}:8000/ws/chat`);
     
     ws.current.onopen = () => {
       setIsConnected(true);
