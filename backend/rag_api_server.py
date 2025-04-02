@@ -13,8 +13,10 @@ from pathlib import Path
 
 import aiofiles
 import ffmpeg
+#from backend.clip import time_to_seconds
 import pytube
 import whisper
+import re
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
@@ -32,6 +34,8 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.callbacks.base import BaseCallbackHandler
+
+from langchain.schema import HumanMessage
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -224,13 +228,14 @@ class RAGProcessor:
         custom_template = """
         Use the following pieces of context to answer the question at the end.
         If you don't know the answer, just say you don't know. Don't try to make up an answer.
+        Provide a combined SINGLE timestamps of where in the transcript the answer occurred in the format [start - end], if applicable. 
         
         {context}
         
         Chat History: {chat_history}
         Question: {question}
         
-        Important: Provide only your answer without repeating the question or including phrases like "Based on the context" or "According to the documents". Start your response directly with the relevant information.
+        Important: Provide only your answer WITHOUT repeating the question or including phrases like "Based on the context" or "According to the documents". Start your response directly with the relevant information. Provide a timestamp of where the answer occured in the transcript at the beginning of the answer if applicable.
         
         Answer:
         """
@@ -295,7 +300,38 @@ class RAGProcessor:
         except Exception as e:
             print(f"Error loading documents: {e}")
             return False
-    
+    # def extract_timestamps_from_document(self, document: str) -> list:
+    #     """
+    #     Extract timestamps in the format [hh:mm:ss - hh:mm:ss] from the document's text.
+        
+    #     Args:
+    #         document (str): The text content of the document from which to extract timestamps.
+        
+    #     Returns:
+    #         list: A list of timestamp dictionaries with 'start' and 'end' times as floats.
+    #     """
+    #     # Regular expression to find timestamps in the format [hh:mm:ss - hh:mm:ss]
+    #     timestamp_pattern = r"\[(\d{2}):(\d{2}):(\d{2})\s*-\s*(\d{2}):(\d{2}):(\d{2})\]"
+        
+    #     timestamps = []
+        
+    #     # Find all matches of the timestamp pattern
+    #     matches = re.findall(timestamp_pattern, document)
+        
+    #     # Loop through all the matches and convert them into start and end times in seconds
+    #     for match in matches:
+    #         start_h, start_m, start_s, end_h, end_m, end_s = match
+            
+    #         # Convert time to seconds
+    #         start_time = int(start_h) * 3600 + int(start_m) * 60 + int(start_s)
+    #         end_time = int(end_h) * 3600 + int(end_m) * 60 + int(end_s)
+            
+    #         timestamps.append({
+    #             "start": start_time,
+    #             "end": end_time
+    #         })
+        
+    #     return timestamps
     async def chat(self, connection_id: str, query: str) -> str:
         """
         Process a chat query using the conversation chain for a specific connection
@@ -315,11 +351,147 @@ class RAGProcessor:
         
         try:
             response = await self.conversation_chains[connection_id].ainvoke({"question": query})
-            return response["answer"]
+            answer = response["answer"]
+            
+            # Retrieve the most relevant transcript chunk
+            relevant_chunks = self.vectorstore.similarity_search(query, k=1)
+            
+            if relevant_chunks:
+                metadata = relevant_chunks[0].metadata  # Retrieve metadata
+                print("Metadata:", metadata)  # Debugging step
+                if "source" in metadata:
+                    video_id = metadata["source"].split("\\")[-1].split(".")[0]  # Extract the UUID
+                    print("Video ID:", video_id)  # Expected output: "b20e6df9-408b-45cb-abd9-d9909cbab9e0"
+                else:
+                    print("Error: 'source' not found in metadata")
+                # Extract timestamps from the transcript text (not model-generated answer)
+                video_name = self.document_metadata[video_id].filename
+                video_name = video_id+'_'+video_name
+                timestamps = []
+                for chunk in relevant_chunks:
+                    timestamps.extend(self.extract_timestamps(chunk.page_content))  # Extract from transcript
+                
+                print("Extracted Timestamps:", timestamps)
+                
+                # If relevant timestamps are found, create the video clip
+                if timestamps:
+                    clip_path = await self.generate_clip(video_name, timestamps[0], timestamps[-1])
+                    return f"Clip created successfully. You can view the video at {clip_path}. Answer: {answer}"
+            
+            # If no timestamps were found, return only the answer
+            return f"Answer: {answer}"
+        
         except Exception as e:
             print(f"Error in chat: {e}")
             return f"An error occurred: {str(e)}"
+        
     
+    # async def get_relevant_timestamps(self, query: str) -> List[str]:
+    #     """Retrieve timestamps from transcript chunks that are most relevant to the query."""
+    #     # Ensure vector store exists and is loaded
+    #     if not self.vectorstore:
+    #         print("Vector store not initialized. Loading documents...")
+    #         await self.load_documents()
+        
+    #     if not self.vectorstore:
+    #         print("Failed to initialize vector store")
+    #         return []
+
+    #     # Use OpenAI model to compare query with document chunks
+    #     llm = ChatOpenAI(temperature=0)
+
+    #     # Create a prompt template to retrieve the most relevant context
+    #     custom_template = """
+    #     Given the following context, please answer the question below:
+    #     {context}
+        
+    #     Question: {question}
+        
+    #     Important: Provide only your answer without including phrases like "Based on the context" or "According to the documents". Start your response directly with the relevant information.
+    #     Answer:
+    #     """
+        
+    #     prompt = PromptTemplate.from_template(custom_template)
+        
+    #     # Use the vector store's retriever to fetch relevant chunks from documents
+    #     retriever = self.vectorstore.as_retriever(search_kwargs={"k": 5})
+    #     docs = retriever.invoke(query)
+        
+    #     relevant_timestamps = []
+        
+    #     # Loop through retrieved documents to compare with query and extract timestamps
+    #     for doc in docs:
+    #     # Access document text using 'page_content' attribute
+    #         context = doc.page_content  # Access text with the 'page_content' attribute
+
+    #         # Construct the message format as required by the OpenAI model
+    #         messages = [
+    #             HumanMessage(content=f"Given the following context, please answer the question below: {context}"),
+    #             HumanMessage(content=f"Question: {query}")
+    #         ]
+
+    #         # Use OpenAI model to determine if this chunk answers the question
+    #         response = llm.invoke(messages)  # Use 'invoke' here instead of 'predict'
+
+    #         # If the response contains an answer, check for timestamps
+    #         if "timestamp" in response.lower():  # Adjust this to suit how timestamps are formatted in response
+    #             # Extract the timestamp(s) if available in the document text or metadata
+    #             timestamps = self.extract_timestamps(doc.page_content)
+    #             if timestamps:
+    #                 relevant_timestamps.extend(timestamps)
+        
+    #     return relevant_timestamps
+
+    def extract_timestamps(self, text: str) -> List[str]:
+        """Extract timestamps from a transcript chunk text."""
+        # Assuming timestamps are in the format [HH:MM:SS] or similar
+        
+        matches = re.findall(r"\[(\d{2}:\d{2}) - (\d{2}:\d{2})\]", text)
+    
+    # Flatten the list of tuples into a single list
+        return [timestamp for match in matches for timestamp in match]
+    
+    def generate_clip(self, video_id: str, start_time: str, end_time: str = None, duration: str = None) -> str:
+        """
+            Extracts a video clip from the original video using FFmpeg.
+
+        Args:
+            video_id (str): ID of the video file.
+            start_time (str): Start time in "MM:SS" or seconds.
+            end_time (str, optional): End time in "MM:SS" or seconds. Defaults to None.
+            duration (str, optional): Clip duration in "MM:SS" or seconds. Defaults to None.
+
+        Returns:
+            str: Path to the generated clip.
+        """
+        input_file = f"uploads/{video_id}"
+        output_file = f"uploads/{video_id}_{int(self.time_to_seconds(start_time))}.mp4"
+
+        input_kwargs = {'ss': self.time_to_seconds(start_time)}  # This sets the start time
+
+        if duration:
+            input_kwargs['t'] = self.time_to_seconds(duration)  # Duration as the length of the clip
+        elif end_time:
+            input_kwargs['to'] = self.time_to_seconds(end_time)  # Using 'to' for the end time
+
+        print(f"Checking file: {input_file}")
+        print(f"File exists: {os.path.exists(input_file)}")
+
+        # Run FFmpeg with adjusted input_kwargs
+        ffmpeg.input(input_file, **input_kwargs).output(output_file, c='copy').run()
+
+        return output_file  # Return path to the new clip
+    
+    def time_to_seconds(self,timestamp):
+        """Convert timestamp format 'MM:SS' or 'HH:MM:SS' to total seconds."""
+        parts = list(map(int, timestamp.split(":")))
+        if len(parts) == 2:  # MM:SS
+            return parts[0] * 60 + parts[1]
+        elif len(parts) == 3:  # HH:MM:SS
+            return parts[0] * 3600 + parts[1] * 60 + parts[2]
+        return int(timestamp)  # If it's already in seconds
+    
+
     def clear_memory(self, connection_id: str):
         """Clear the conversation memory for a specific connection"""
         if connection_id in self.memories:

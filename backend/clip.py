@@ -1,56 +1,50 @@
-from moviepy import VideoFileClip
+'''import ffmpeg
 import os
-import ffmpeg
-
-def clip_video(input_path, output_path, start_time, duration=None, end_time=None):
-    """
-    Clips a video using ffmpeg-python.
-
-    Args:
-        input_path (str): Path to the input video file.
-        output_path (str): Path to the output video file.
-        start_time (str): Start time in HH:MM:SS format (e.g., "00:01:30").
-        duration (str, optional): Duration of the clip in HH:MM:SS format (e.g., "00:00:10"). Defaults to None.
-        end_time (str, optional): End time of the clip in HH:MM:SS format (e.g., "00:01:40"). Defaults to None.
-    """
-    input_kwargs = {'ss': start_time}
-    if duration:
-        input_kwargs['t'] = duration
-    elif end_time:
-         input_kwargs['to'] = end_time
-
-    ffmpeg.input(input_path, **input_kwargs).output(output_path, c='copy').run()
-
-
 
 def time_to_seconds(timestamp):
-    """Convert timestamp format 'MM:SS' to total seconds."""
-    minutes, seconds = map(int, timestamp.split(":"))
-    return minutes * 60 + seconds
+    """Convert timestamp format 'MM:SS' or 'HH:MM:SS' to total seconds."""
+    parts = list(map(int, timestamp.split(":")))
+    if len(parts) == 2:  # MM:SS
+        return parts[0] * 60 + parts[1]
+    elif len(parts) == 3:  # HH:MM:SS
+        return parts[0] * 3600 + parts[1] * 60 + parts[2]
+    return int(timestamp)  # If it's already in seconds
+
+def generate_clip(video_id: str, start_time: str, end_time: str = None, duration: str = None) -> str:
+    """
+    Extracts a video clip from the original video using FFmpeg.
+
+    Args:
+        video_id (str): ID of the video file.
+        start_time (str): Start time in "MM:SS" or seconds.
+        end_time (str, optional): End time in "MM:SS" or seconds. Defaults to None.
+        duration (str, optional): Clip duration in "MM:SS" or seconds. Defaults to None.
+
+    Returns:
+        str: Path to the generated clip.
+    """
+    input_file = f"uploads/{video_id}.mp4"
+    output_file = f"uploads/{video_id}_{int(time_to_seconds(start_time))}.mp4"
+
+    input_kwargs = {'ss': time_to_seconds(start_time)}  # This sets the start time
+
+    if duration:
+        input_kwargs['t'] = time_to_seconds(duration)  # Duration as the length of the clip
+    elif end_time:
+        input_kwargs['to'] = time_to_seconds(end_time)  # Using 'to' for the end time
+
+    print(f"Checking file: {input_file}")
+    print(f"File exists: {os.path.exists(input_file)}")
+
+    # Run FFmpeg with adjusted input_kwargs
+    ffmpeg.input(input_file, **input_kwargs).output(output_file, c='copy').run()
+
+    return output_file  # Return path to the new clip
 
 
-def get_clip_from_prompt(video_filename, prompt):
-    
-        video_path = os.path.join("uploads", video_filename)
+# Example usage:
+#video_id = "b20e6df9-408b-45cb-abd9-d9909cbab9e0_Math Video"
+#start_time = "00:30"  # 1 minute 30 seconds
+#end_time = "00:45"  # 2 minutes
 
-#Extract start and end timestamps from the prompt
-        timestamps = prompt.split()  # Expecting "MM:SS MM:SS" format
-        if len(timestamps) != 2:
-            print("Invalid input format. Please use 'MM:SS MM:SS'.")
-            return None
-
-        start_time = time_to_seconds(timestamps[0])
-        end_time = time_to_seconds(timestamps[1])
-
-        return clip_video(video_path, "output.mp4", start_time, end_time=end_time)
-    
-    
-
-#Example usage
-if __name__ == "__main__":
-    video_filename = "b20e6df9-408b-45cb-abd9-d9909cbab9e0_Math Video.mp4"  # Video stored in uploads folder
-    prompt = input("Enter start and end timestamps (MM:SS MM:SS): ")  # Get user input
-
-    output_video = get_clip_from_prompt(video_filename, prompt)
-    if output_video:
-        print(f"Clipped video available at: {output_video}")
+#output_path = generate_clip(video_id, start_time, end_time=end_time)'''
