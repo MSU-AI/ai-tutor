@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Video Player</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    #videoPlayer {
+      display: block;
+      margin: 0 auto 20px;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      align-items: center;
+    }
+
+    button, select {
+      font-size: 16px;
+      padding: 8px 16px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #fff;
+    }
+
+    button:hover, select:hover {
+      background-color: #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Custom Video Player</h1>
+
+  <!-- Video Player -->
+  <video id="videoPlayer" width="600">
+    <source id="videoSource" src="path_to_your_clipped_video.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <!-- Custom Controls -->
+  <div class="controls">
+    <button id="playPauseBtn">Play</button>
+    <label for="speedControl">Speed:</label>
+    <select id="speedControl">
+      <option value="0.5">0.5x</option>
+      <option value="1" selected>1x</option>
+      <option value="1.5">1.5x</option>
+      <option value="2">2x</option>
+    </select>
+  </div>
+
+  <script>
+    const video = document.getElementById("videoPlayer");
+    const playPauseBtn = document.getElementById("playPauseBtn");
+    const speedControl = document.getElementById("speedControl");
+
+    // Play/Pause functionality
+    playPauseBtn.addEventListener("click", () => {
+      if (video.paused) {
+        video.play();
+        playPauseBtn.textContent = "Pause";
+      } else {
+        video.pause();
+        playPauseBtn.textContent = "Play";
+      }
+    });
+
+    // Speed control functionality
+    speedControl.addEventListener("change", (event) => {
+      const selectedSpeed = event.target.value;
+      video.playbackRate = parseFloat(selectedSpeed); // Set the playback speed
+    });
+  </script>
+</body>
+</html>
