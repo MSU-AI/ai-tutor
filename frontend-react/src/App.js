@@ -3,6 +3,7 @@ import './App.css';
 import ChatTab from './components/ChatTab';
 import DocumentsTab from './components/DocumentsTab';
 import UploadTab from './components/UploadTab';
+import VideoPlayer from './components/VideoPlayer';
 
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -271,6 +272,18 @@ function App() {
             Upload
           </a>
         </li>
+        <li className="nav-item"> {/* Add Video Player tab here */}
+    <a 
+      className={`nav-link ${activeTab === 'video' ? 'active' : ''}`} 
+      href="#" 
+      onClick={(e) => {
+        e.preventDefault();
+        setActiveTab('video');
+      }}
+    >
+      Video Player
+    </a>
+      </li>
       </ul>
       
       {activeTab === 'chat' && (
@@ -302,6 +315,9 @@ function App() {
           apiBaseUrl={API_BASE_URL}
         />
       )}
+            {activeTab === 'video' && (
+  <VideoPlayer />
+)}
     </div>
   );
 }
