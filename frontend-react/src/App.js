@@ -3,7 +3,7 @@ import './App.css';
 import ChatTab from './components/ChatTab';
 import DocumentsTab from './components/DocumentsTab';
 import UploadTab from './components/UploadTab';
-import VideoPlayer from './components/VideoPlayer';
+import VideoPlayer from './components/vidplayer';
 
 const API_BASE_URL = 'http://localhost:8000';
 
