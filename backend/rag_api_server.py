@@ -687,6 +687,42 @@ class RAGProcessor:
             # Broadcast error status
             await self.broadcast_document_status(file_id)
             return False
+            
+    def chat():
+    user_message = request.json['message']
+    
+    # Check if the message involves generating a video clip
+    if 'generate_clip' in user_message:
+        video_id = user_message.get('video_id')
+        start_time = user_message.get('start_time')
+        end_time = user_message.get('end_time', None)
+        duration = user_message.get('duration', None)
+        
+        # Call the function to generate the clip and get the video URL
+        video_url = generate_clip(video_id, start_time, end_time, duration)
+        
+        # Send the response back with the video URL
+        response = {
+            "messages": [
+                {
+                    "sender": "ai",
+                    "text": "Here is your video clip",
+                    "videoUrl": video_url
+                }
+            ]
+        }
+        
+    else:
+        response = {
+            "messages": [
+                {
+                    "sender": "ai",
+                    "text": "Processing your request..."
+                }
+            ]
+        }
+    
+    return jsonify(response)
     
     def _format_timestamp(self, seconds: float) -> str:
         """Format seconds as mm:ss"""
