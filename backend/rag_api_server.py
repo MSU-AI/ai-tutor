@@ -465,22 +465,24 @@ class RAGProcessor:
             str: Path to the generated clip.
         """
         input_file = f"uploads/{video_id}"
-        output_file = f"uploads/{video_id}_{int(self.time_to_seconds(start_time))}.mp4"
+    output_file = f"uploads/{video_id}_{int(self.time_to_seconds(start_time))}.mp4"
 
-        input_kwargs = {'ss': self.time_to_seconds(start_time)}  # This sets the start time
+    input_kwargs = {'ss': self.time_to_seconds(start_time)}
 
-        if duration:
-            input_kwargs['t'] = self.time_to_seconds(duration)  # Duration as the length of the clip
-        elif end_time:
-            input_kwargs['to'] = self.time_to_seconds(end_time)  # Using 'to' for the end time
+    if duration:
+        input_kwargs['t'] = self.time_to_seconds(duration)
+    elif end_time:
+        input_kwargs['to'] = self.time_to_seconds(end_time)
 
-        print(f"Checking file: {input_file}")
-        print(f"File exists: {os.path.exists(input_file)}")
+    print(f"Checking file: {input_file}")
+    print(f"File exists: {os.path.exists(input_file)}")
 
-        # Run FFmpeg with adjusted input_kwargs
-        ffmpeg.input(input_file, **input_kwargs).output(output_file, c='copy').run()
+    # Run FFmpeg to generate the clip
+    ffmpeg.input(input_file, **input_kwargs).output(output_file, c='copy').run()
 
-        return output_file  # Return path to the new clip
+    # Return the relative URL of the generated video file (accessible via the /uploads endpoint)
+    video_url = f"/uploads/{os.path.basename(output_file)}"
+    return video_url
     
     def time_to_seconds(self,timestamp):
         """Convert timestamp format 'MM:SS' or 'HH:MM:SS' to total seconds."""
