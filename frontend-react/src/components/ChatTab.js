@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import VidPlayer from './vidplayer';
 
 const ChatTab = ({ 
   messages, 
@@ -21,6 +22,7 @@ const ChatTab = ({
 
   return (
     <div>
+    <VidPlayer />
       <div className="chat-container" ref={chatContainerRef}>
         {messages.map((message, index) => (
           <div 
