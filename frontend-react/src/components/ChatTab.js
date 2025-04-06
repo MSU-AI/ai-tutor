@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import VidPlayer from './vidplayer';
+import VidPlayer from './VidPlayer';  // Ensure VidPlayer is available to show the video
 
 const ChatTab = ({ 
   messages, 
@@ -35,11 +35,9 @@ const ChatTab = ({
             )}
             <div>{message.text}</div>
 
-            {/* Check if the message contains a video URL and render VidPlayer */}
+            {/* Check if video URL exists for this message */}
             {message.videoUrl && (
-              <div className="video-player-container">
-                <VidPlayer videoUrl={message.videoUrl} />
-              </div>
+              <VidPlayer videoUrl={message.videoUrl} />
             )}
           </div>
         ))}
@@ -91,4 +89,3 @@ const ChatTab = ({
 };
 
 export default ChatTab;
-
