@@ -22,7 +22,6 @@ const ChatTab = ({
 
   return (
     <div>
-    <VidPlayer />
       <div className="chat-container" ref={chatContainerRef}>
         {messages.map((message, index) => (
           <div 
@@ -35,6 +34,13 @@ const ChatTab = ({
               </div>
             )}
             <div>{message.text}</div>
+
+            {/* Check if the message contains a video URL and render VidPlayer */}
+            {message.videoUrl && (
+              <div className="video-player-container">
+                <VidPlayer videoUrl={message.videoUrl} />
+              </div>
+            )}
           </div>
         ))}
         
@@ -84,4 +90,5 @@ const ChatTab = ({
   );
 };
 
-export default ChatTab; 
+export default ChatTab;
+
