@@ -1,0 +1,85 @@
+/* FileDropBox.css */
+
+/* General container for the file upload */
+.file-dropbox-container {
+    background-color: white;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Vertically center the items */
+    height: 100vh; /* Full screen height */
+    width: 100vw; /* Full screen width */
+    position: absolute; /* To ensure it's centered within the entire viewport */
+    top: 0;
+    left: 0;
+  }
+  
+  /* Upload button styles */
+  .upload-button {
+    background-color: #f97316;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 12px 24px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .upload-button:hover {
+    background-color: #ea580c;
+  }
+  
+  /* Hide the default file input button */
+  input[type="file"].hidden {
+    display: none;
+  }
+  
+  /* Video preview styles */
+  .video-preview {
+    margin-top: 16px;
+    width: 100%;
+    max-width: 600px; /* Control max width of the video */
+  }
+  
+  .video-player {
+    width: 100%;
+    border-radius: 8px;
+  }
+  
+  /* PDF preview styles */
+  .pdf-preview {
+    margin-top: 16px;
+    width: 100%;
+    max-width: 600px; /* Control max width of the PDF preview */
+  }
+  
+  iframe {
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* File list styles */
+  .file-list {
+    margin-top: 16px;
+    color: #4b5563;
+  }
+  
+  .file-list-item {
+    padding: 8px;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .file-list-item:hover {
+    background-color: #f4f4f4;
+  }
+  
+  /* Add spacing between the two file dropboxes */
+  .file-dropbox {
+    margin-bottom: 20px; /* Adjust this value for more/less space between buttons */
+  }
+  
